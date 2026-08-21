@@ -4,7 +4,7 @@ import { buildDigitalTwinSystemPrompt } from "@/data/profile";
 export const runtime = "nodejs";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const MODEL = "openai/gpt-oss-20b:free";
+const DEFAULT_MODEL = "openai/gpt-oss-20b:free";
 const MAX_HISTORY_MESSAGES = 16;
 const MAX_MESSAGE_LENGTH = 2000;
 const UPSTREAM_TIMEOUT_MS = 55_000;
@@ -51,6 +51,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No valid messages provided." }, { status: 400 });
   }
 
+  const model = process.env.OPENROUTER_MODEL || DEFAULT_MODEL;
+
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), UPSTREAM_TIMEOUT_MS);
 
@@ -61,11 +63,11 @@ export async function POST(req: NextRequest) {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://arpit-jaiswal-portfolio.local",
-        "X-Title": "Arpit Jaiswal - Digital Twin",
+        "HTTP-Referer": "https://digital-twin-portfolio.local",
+        "X-Title": "Digital Twin Portfolio Chat",
       },
       body: JSON.stringify({
-        model: MODEL,
+        model,
         messages: [
           { role: "system", content: buildDigitalTwinSystemPrompt() },
           ...messages,
