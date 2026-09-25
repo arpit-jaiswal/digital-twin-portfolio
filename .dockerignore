@@ -1,0 +1,14 @@
+node_modules
+.next
+.git
+.idea
+*.iml
+docs
+tutorial.md
+plan.md
+README.md
+.env
+.env.*
+!.env.example
+npm-debug.log*
+*.tsbuildinfo

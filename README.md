@@ -25,6 +25,22 @@ Copy `.env.example` to `.env` and fill it in. Never commit `.env`, it's already 
 | `OPENROUTER_API_KEY` | Yes | Your OpenRouter API key. Get one at [openrouter.ai/settings/keys](https://openrouter.ai/settings/keys). |
 | `OPENROUTER_MODEL` | No | Which chat model the digital twin uses (any model listed at [openrouter.ai/models](https://openrouter.ai/models)). Defaults to `openai/gpt-oss-20b:free` if not set. |
 
+## Run with Docker
+
+```bash
+cp .env.example .env   # then fill in your OPENROUTER_API_KEY
+docker compose up --build
+```
+
+Open [http://localhost:3000](http://localhost:3000). The compose file reads env vars from `.env` at runtime, they are never baked into the image.
+
+To build/run without compose:
+
+```bash
+docker build -t digital-twin-portfolio .
+docker run --env-file .env -p 3000:3000 digital-twin-portfolio
+```
+
 ## Content
 
 All site content (bio, career journey, skills, contact links) lives in `src/data/profile.ts`, edit that one file to update the whole site, including what the digital twin chatbot knows.
