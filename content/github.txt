@@ -1,0 +1,16 @@
+GitHub: https://github.com/arpit-jaiswal
+
+Notes for the AI agent rewriting content/profile.json:
+Use the projects below to populate a Portfolio/Projects section (one entry
+per project) and to inform the digital twin's chat context. Do not invent
+projects, descriptions, or links beyond what's listed here.
+
+PROJECTS
+
+1. digital-twin-portfolio
+   - Description: Personal portfolio site built with Next.js, with an AI
+     "digital twin" chat widget that answers career questions grounded in
+     real work history, powered by OpenRouter.
+   - Tech stack: TypeScript, Next.js, React, Tailwind CSS, OpenRouter API
+   - Link: https://github.com/arpit-jaiswal/digital-twin-portfolio
+   - Type: Personal project (this site itself)

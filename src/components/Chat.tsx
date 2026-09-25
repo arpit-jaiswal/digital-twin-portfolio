@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { profile } from "@/data/profile";
 
 type Message = {
   role: "user" | "assistant";
@@ -14,12 +13,13 @@ const SUGGESTIONS = [
   "What's your strongest skill set?",
 ];
 
-const INITIAL_MESSAGE: Message = {
-  role: "assistant",
-  content: `Hey, I'm ${profile.name.split(" ")[0]}'s digital twin. Ask me anything about his career, the systems he's built, or his experience across fintech and e-commerce.`,
-};
+export default function Chat({ name }: { name: string }) {
+  const firstName = name.split(" ")[0];
+  const INITIAL_MESSAGE: Message = {
+    role: "assistant",
+    content: `Hey, I'm ${firstName}'s digital twin. Ask me anything about his career, the systems he's built, or his experience across fintech and e-commerce.`,
+  };
 
-export default function Chat() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
@@ -91,7 +91,7 @@ export default function Chat() {
             <span className="h-2.5 w-2.5 rounded-full bg-accent shadow-[0_0_10px_var(--accent)]" />
             <div>
               <p className="font-display text-sm font-semibold leading-tight">
-                {profile.name} · Digital Twin
+                {name} · Digital Twin
               </p>
               <p className="font-mono text-[11px] text-muted-2 leading-tight">
                 AI, answers from his real career history

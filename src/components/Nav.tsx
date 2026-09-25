@@ -1,18 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { profile } from "@/data/profile";
 
-const links = [
-  { href: "#about", label: "About" },
-  { href: "#journey", label: "Journey" },
-  { href: "#skills", label: "Skills" },
-  { href: "#contact", label: "Contact" },
-];
-
-export default function Nav() {
+export default function Nav({
+  name,
+  resumeHref,
+  hasProjects,
+}: {
+  name: string;
+  resumeHref: string;
+  hasProjects: boolean;
+}) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+
+  const links = [
+    { href: "#about", label: "About" },
+    { href: "#journey", label: "Journey" },
+    { href: "#skills", label: "Skills" },
+    ...(hasProjects ? [{ href: "#projects", label: "Projects" }] : []),
+    { href: "#contact", label: "Contact" },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -35,7 +43,7 @@ export default function Nav() {
           className="font-display font-semibold text-sm tracking-tight flex items-center gap-2"
         >
           <span className="inline-block h-2 w-2 rounded-full bg-accent shadow-[0_0_12px_var(--accent)]" />
-          {profile.name}
+          {name}
         </a>
 
         <div className="hidden md:flex items-center gap-8">
@@ -52,7 +60,7 @@ export default function Nav() {
 
         <div className="hidden md:block">
           <a
-            href={profile.resumeHref}
+            href={resumeHref}
             download
             className="text-sm font-mono px-4 py-2 rounded-full border border-border-strong text-foreground hover:border-accent hover:text-accent transition-colors"
           >
@@ -88,7 +96,7 @@ export default function Nav() {
               </a>
             ))}
             <a
-              href={profile.resumeHref}
+              href={resumeHref}
               download
               className="text-sm font-mono px-4 py-2 rounded-full border border-border-strong text-foreground hover:border-accent hover:text-accent transition-colors w-fit"
             >
