@@ -40,14 +40,16 @@ export default function Hero() {
               See the journey
               <span className="transition-transform group-hover:translate-x-1">→</span>
             </a>
-            <a
-              href={profile.linkedin || `mailto:${profile.email}`}
-              target={profile.linkedin ? "_blank" : undefined}
-              rel={profile.linkedin ? "noopener noreferrer" : undefined}
-              className="inline-flex items-center gap-2 rounded-full border border-border-strong px-6 py-3 text-sm font-mono text-foreground hover:border-accent hover:text-accent transition"
-            >
-              Get in touch
-            </a>
+            {(profile.linkedin || profile.email) && (
+              <a
+                href={profile.linkedin || `mailto:${profile.email}`}
+                target={profile.linkedin ? "_blank" : undefined}
+                rel={profile.linkedin ? "noopener noreferrer" : undefined}
+                className="inline-flex items-center gap-2 rounded-full border border-border-strong px-6 py-3 text-sm font-mono text-foreground hover:border-accent hover:text-accent transition"
+              >
+                Get in touch
+              </a>
+            )}
           </div>
         </div>
 

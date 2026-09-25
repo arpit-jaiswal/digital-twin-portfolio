@@ -1,6 +1,8 @@
 import { skills } from "@/data/profile";
 
 export default function Skills() {
+  if (skills.length === 0) return null;
+
   return (
     <section id="skills" className="relative py-24 sm:py-32 border-t border-border">
       <div className="max-w-6xl mx-auto px-6 sm:px-8">

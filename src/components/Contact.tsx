@@ -5,7 +5,7 @@ export default function Contact() {
     <section id="contact" className="relative py-24 sm:py-32 border-t border-border">
       <div className="max-w-6xl mx-auto px-6 sm:px-8">
         <div className="flex items-baseline gap-4 mb-14">
-          <span className="font-mono text-xs text-accent">04</span>
+          <span className="font-mono text-xs text-accent">05</span>
           <h2 className="font-display text-3xl sm:text-4xl font-semibold tracking-tight">
             Contact
           </h2>
@@ -26,28 +26,34 @@ export default function Contact() {
           </p>
 
           <div className="mt-10 flex flex-wrap gap-4 relative">
-            <a
-              href={`mailto:${profile.email}`}
-              className="inline-flex items-center gap-2 rounded-full border border-border-strong px-6 py-3 text-sm font-mono text-foreground hover:border-accent hover:text-accent transition"
-            >
-              {profile.email}
-            </a>
-            <a
-              href={profile.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-border-strong px-6 py-3 text-sm font-mono text-foreground hover:border-accent hover:text-accent transition"
-            >
-              LinkedIn ↗
-            </a>
-            <a
-              href={profile.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-border-strong px-6 py-3 text-sm font-mono text-foreground hover:border-accent hover:text-accent transition"
-            >
-              GitHub ↗
-            </a>
+            {profile.email && (
+              <a
+                href={`mailto:${profile.email}`}
+                className="inline-flex items-center gap-2 rounded-full border border-border-strong px-6 py-3 text-sm font-mono text-foreground hover:border-accent hover:text-accent transition"
+              >
+                {profile.email}
+              </a>
+            )}
+            {profile.linkedin && (
+              <a
+                href={profile.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-border-strong px-6 py-3 text-sm font-mono text-foreground hover:border-accent hover:text-accent transition"
+              >
+                LinkedIn ↗
+              </a>
+            )}
+            {profile.github && (
+              <a
+                href={profile.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-full border border-border-strong px-6 py-3 text-sm font-mono text-foreground hover:border-accent hover:text-accent transition"
+              >
+                GitHub ↗
+              </a>
+            )}
             <a
               href={profile.resumeHref}
               download
