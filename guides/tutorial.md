@@ -41,7 +41,7 @@ Here's every piece of technology used, and what it's *for* in plain English.
 | **Node.js** | The program that runs JavaScript *outside* a browser: on a server, or on your laptop, when you run `npm run dev`. | Next.js itself runs on Node.js, and our AI API route runs as Node.js server code. |
 | **npm** | "Node Package Manager," the tool that downloads and manages third-party code libraries (called *packages*) your project depends on. | Used to install React, Next.js, Tailwind, etc. and to run project scripts (`npm run dev`, `npm run build`). |
 | **OpenRouter** | A service that gives you one API to talk to many different AI models (OpenAI, Anthropic, Meta, etc.) from different providers, including free ones. | We use it to send chat messages to an AI model and get a reply back, without hosting our own AI model. |
-| **`openai/gpt-oss-20b:free`** | The specific free AI language model we call through OpenRouter. | It's free to use (with rate limits), and good enough to answer career questions grounded in your resume. |
+| **Free OpenRouter model (default)** | The AI language model called through OpenRouter, e.g. `openai/gpt-oss-20b:free`. Free-tier model slugs on OpenRouter get discontinued/renamed over time, so the default is set via an environment variable, not hardcoded. | Free to use (with rate limits), and good enough to answer career questions grounded in your resume. |
 | **Environment variables (`.env`)** | A file that holds secret configuration values (like API keys) *outside* of your actual code, so secrets never get committed to version control or shipped to the browser. | Keeps your OpenRouter API key private. |
 | **Git** | A version control system: it tracks every change to your files over time, in named snapshots called commits. | We initialized a repository, committed the project, and pushed it to GitHub so the code has real history and a home online. |
 
@@ -97,31 +97,42 @@ Here's the folder structure, and what each part is responsible for:
 digital-twin-portfolio/
 ├── .env                          # secret config (your OpenRouter API key), never committed
 ├── package.json                  # lists dependencies + scripts (npm run dev, build, etc.)
-├── public/                       # static files served as-is
-│   └── Arpit_Jaiswal_Resume.pdf  #   downloadable from the "Resume" button
+├── content/                          # ALL your content lives here, the single source of truth
+│   ├── profile.json               #   structured data: bio, journey, skills, projects, education
+│   ├── profile.schema.md          #   describes the exact shape profile.json must have
+│   ├── resume.pdf                  #   served as-is at /api/resume
+│   ├── linkedin_profile.pdf        #   (optional) raw source doc, AI-agent input only
+│   └── github.txt                  #   (optional) raw source doc, AI-agent input only
+├── public/                       # static files served as-is (icons, svgs; no personal data)
+├── deployment/                    # Dockerfile, docker-compose.yml, .dockerignore
 ├── src/
 │   ├── app/                      # Next.js "App Router": pages & API routes live here
 │   │   ├── layout.tsx            #   the outer HTML shell shared by every page
 │   │   ├── page.tsx              #   the homepage, assembles all the sections
 │   │   ├── globals.css           #   site-wide CSS (colors, fonts, custom effects)
 │   │   └── api/
-│   │       └── chat/
-│   │           └── route.ts      #   backend endpoint the Chat widget calls
+│   │       ├── chat/
+│   │       │   └── route.ts      #   backend endpoint the Chat widget calls
+│   │       └── resume/
+│   │           └── route.ts      #   streams content/resume.pdf to the browser
 │   ├── components/                # one file per reusable UI piece
 │   │   ├── Nav.tsx
 │   │   ├── Hero.tsx
 │   │   ├── About.tsx
 │   │   ├── Journey.tsx
 │   │   ├── Skills.tsx
+│   │   ├── Projects.tsx
 │   │   ├── Contact.tsx
 │   │   ├── Footer.tsx
 │   │   └── Chat.tsx
 │   └── data/
-│       └── profile.ts             # ALL your content lives here, the single source of truth
-└── tutorial.md                    # this file
+│       └── profile.ts             # a LOADER: reads content/profile.json at runtime, contains
+│                                   #   no personal data itself
+└── guides/
+    └── tutorial.md                 # this file
 ```
 
-A useful rule of thumb: **`app/` decides what pages exist and how they're wired together; `components/` holds the reusable visual building blocks; `data/` holds the actual content.**
+A useful rule of thumb: **`content/` holds the actual content (the only thing you edit to make this your own site); `app/` decides what pages exist and how they're wired together; `components/` holds the reusable visual building blocks; `data/profile.ts` is just the plumbing that connects the two.**
 
 ---
 
@@ -129,27 +140,49 @@ A useful rule of thumb: **`app/` decides what pages exist and how they're wired 
 
 Let's go file by file. If you're brand new to code, read the "What this teaches you" callouts. They explain the *general* programming concept, not just what this specific file does.
 
-### 4.1 The data file: `profile.ts`
+### 4.1 The content: `content/profile.json`, loaded by `profile.ts`
 
-This is the most important file to understand first, because everything else depends on it.
+This is the most important part to understand first, because everything else depends on it. It's split across two files with two different jobs:
 
-```typescript
-// src/data/profile.ts
+- **`content/profile.json`** holds the actual content: your name, bio, journey, skills, projects, education, contact links. This is the *only* file you edit to make the site yours.
+- **`src/data/profile.ts`** is a small loader: it reads `content/profile.json` off disk when the server starts, and re-exports it with proper TypeScript types so the rest of the app gets type-checked access to it.
 
-export const profile = {
-  name: "Arpit Jaiswal",
-  role: "Senior Software Engineer",
-  tagline: "Backend systems at scale, for fintech & e-commerce.",
-  location: "Bengaluru, India",
-  email: "jaiswal.arpit09@gmail.com",
-  linkedin: "https://www.linkedin.com/in/arpit-jaiswal-4b951837",
-  github: "https://github.com/arpit-jaiswal",
-  resumeHref: "/Arpit_Jaiswal_Resume.pdf",
-  yearsExperience: "8+",
-};
+```json
+// content/profile.json (excerpt)
+
+{
+  "profile": {
+    "name": "Your Name",
+    "role": "Senior Software Engineer",
+    "tagline": "Backend systems at scale, for fintech & e-commerce.",
+    "location": "Bengaluru, India",
+    "email": "you@example.com",
+    "linkedin": "https://www.linkedin.com/in/you",
+    "github": "https://github.com/you",
+    "resumeHref": "/api/resume",
+    "yearsExperience": "8+"
+  }
+}
 ```
 
-> **What this teaches you: objects.** In JavaScript/TypeScript, `{ key: value, key: value }` is called an **object**, a bundle of related named values. Here, `profile.name` is `"Arpit Jaiswal"`, `profile.email` is your email, and so on. Any file in the project can `import { profile } from "@/data/profile"` and then use `profile.name`, `profile.email`, etc. This is how the same name and email show up consistently in the Nav, Hero, Contact, and Footer, without ever being typed twice.
+> **What this teaches you: JSON.** `{ "key": "value", "key": "value" }` is **JSON** (JavaScript Object Notation), a plain-text data format, basically an object with no code allowed inside it, just data. Editing this file is pure data entry: no functions, no logic, nothing to "break" in a programming sense (though it does need valid JSON syntax, matching quotes and commas).
+
+```typescript
+// src/data/profile.ts (the loader)
+
+function loadProfileData(): ProfileData {
+  const filePath = path.join(process.cwd(), "content", "profile.json");
+  const raw = fs.readFileSync(filePath, "utf-8");
+  return JSON.parse(raw) as ProfileData;
+}
+
+const data = loadProfileData();
+export const profile = data.profile;
+export const journey = data.journey;
+// ...and so on for stats, about, skills, projects, education
+```
+
+> **What this teaches you: reading files with `fs`.** `fs` (Node's built-in "file system" module) lets server-side code read files off disk. `fs.readFileSync(filePath, "utf-8")` reads the whole file synchronously and returns its raw text; `JSON.parse(...)` turns that text into a real JavaScript object. This only works in server-side code (Node.js), never in the browser, that's why `profile.ts` can never be imported by a `"use client"` component directly (more on this in [4.5](#45-a-simple-component-navtsx)).
 
 A bit further down, the job history is a **list of objects**, an array:
 
@@ -164,31 +197,33 @@ export type JourneyEntry = {
   highlights: string[];
   tags: string[];
 };
+```
 
-export const journey: JourneyEntry[] = [
+```json
+// content/profile.json (excerpt)
+"journey": [
   {
-    company: "Hyperface",
-    companyFull: "Hyperface Technologies Pvt. Ltd.",
-    role: "Software Development Engineer 3",
-    period: "Apr 2024 - Dec 2025",
-    location: "Bengaluru",
-    summary: "Built core fintech infrastructure connecting banks, issuers and clients, from bulk notification delivery to config-driven credit onboarding.",
-    highlights: [
+    "company": "Hyperface",
+    "companyFull": "Hyperface Technologies Pvt. Ltd.",
+    "role": "Software Development Engineer 3",
+    "period": "Apr 2024 - Dec 2025",
+    "location": "Bengaluru",
+    "summary": "Built core fintech infrastructure connecting banks, issuers and clients, from bulk notification delivery to config-driven credit onboarding.",
+    "highlights": [
       "Built a bulk notification platform covering the full campaign lifecycle...",
-      "Built a configurable credit onboarding platform...",
+      "Built a configurable credit onboarding platform..."
     ],
-    tags: ["Fintech", "Notifications", "Onboarding", "Config-driven systems"],
-  },
-  // ...more jobs
-];
+    "tags": ["Fintech", "Notifications", "Onboarding", "Config-driven systems"]
+  }
+]
 ```
 
 > **What this teaches you: types and arrays.**
-> - `type JourneyEntry = { ... }` defines a **shape**: a contract saying "every journey entry must have these exact fields, and `highlights` must specifically be a list of strings." This is TypeScript's superpower. If you later write a journey entry and forget the `period` field, or type a number where `company` should be, the code simply won't compile. You catch the mistake instantly instead of finding out when the page looks broken.
+> - `type JourneyEntry = { ... }` (in `profile.ts`) defines a **shape**: a contract saying "every journey entry must have these exact fields, and `highlights` must specifically be a list of strings." TypeScript checks the *code* against this shape at build time; it doesn't validate `profile.json` itself; that file's structure is documented separately in `content/profile.schema.md` for humans (and AI agents) filling it in.
 > - `JourneyEntry[]` means "an array (list) of `JourneyEntry` objects." The square brackets after a type mean "a list of this type."
 > - Because `journey` is just data, the `Journey.tsx` component ([section 4.6](#46-a-data-driven-component-journeytsx)) can simply *loop* over it and render one timeline entry per item, no matter how many jobs are in the list.
 
-Finally, there's a function at the bottom of this file that builds the instructions given to the AI chatbot:
+Finally, there's a function at the bottom of `profile.ts` that builds the instructions given to the AI chatbot:
 
 ```typescript
 export function buildDigitalTwinSystemPrompt(): string {
@@ -205,7 +240,7 @@ export function buildDigitalTwinSystemPrompt(): string {
     })
     .join("\n");
 
-  // ...similar for skillsText, educationText...
+  // ...similar for skillsText, educationText, projectsText...
 
   return `You are the "digital twin" of ${profile.name}...
   Ground truth about ${profile.name} (use ONLY this information...):
@@ -217,7 +252,7 @@ export function buildDigitalTwinSystemPrompt(): string {
 
 > **What this teaches you: functions, and `.map()`.**
 > - A **function** is a named, reusable block of logic. `buildDigitalTwinSystemPrompt()` takes no input and returns one big string of text: the instructions for the AI.
-> - `journey.map(...)` is one of the most common patterns in JavaScript: **take a list, and turn each item into something else.** Here we take the list of job objects and turn each one into a line of readable text, then glue them all together with `.join("\n")` (join with newlines). The result is a plain-text career history that gets sent to the AI model as instructions every time someone opens the chat. This is exactly why the chatbot only knows real facts about you: it's *literally being handed your resume as text* before answering any question.
+> - `journey.map(...)` is one of the most common patterns in JavaScript: **take a list, and turn each item into something else.** Here we take the list of job objects and turn each one into a line of readable text, then glue them all together with `.join("\n")` (join with newlines). The result is a plain-text career history that gets sent to the AI model as instructions every time someone opens the chat. This is exactly why the chatbot only knows real facts about you: it's *literally being handed the contents of `content/profile.json` as text* before answering any question.
 
 This file also carries a couple of small, deliberate rules worth calling out, because they came from real feedback while building the site:
 
@@ -300,7 +335,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
 > - **JSX.** The `<html>...</html>` block inside a JavaScript function looks like HTML but is actually **JSX**, a syntax that lets you write HTML-like markup directly inside JavaScript/TypeScript. React converts this into real DOM elements in the browser.
 > - **`next/font/google`.** Instead of linking to Google Fonts via a `<link>` tag (which can slow down page loads), Next.js downloads and self-hosts the fonts at build time. `Geist({...})` returns a CSS variable name (`--font-geist-sans`) that we then apply as a class on `<html>`.
 > - **`{children}`.** This is React's way of saying "whatever page content gets passed in, render it *here*." The `RootLayout` doesn't know or care what the actual page looks like; it just provides the outer `<html>`/`<body>` shell, fonts, and background color, and lets `page.tsx` fill in `{children}`.
-> - **`metadata`.** This exported object controls the browser tab title (`Arpit Jaiswal | Senior Software Engineer`) and the description search engines see, set once, applies to the whole site.
+> - **`metadata`.** This exported object controls the browser tab title (`{profile.name} | {profile.role}`, e.g. "Jane Doe | Senior Software Engineer") and the description search engines see, set once, applies to the whole site.
 
 ---
 
@@ -314,31 +349,40 @@ import Hero from "@/components/Hero";
 import About from "@/components/About";
 import Journey from "@/components/Journey";
 import Skills from "@/components/Skills";
+import Projects from "@/components/Projects";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import Chat from "@/components/Chat";
+import { profile, projects } from "@/data/profile";
 
 export default function Home() {
   return (
     <>
-      <Nav />
+      <Nav
+        name={profile.name}
+        resumeHref={profile.resumeHref}
+        hasProjects={projects.length > 0}
+      />
       <main className="flex-1">
         <Hero />
         <About />
         <Journey />
         <Skills />
+        <Projects />
         <Contact />
       </main>
       <Footer />
-      <Chat />
+      <Chat name={profile.name} />
     </>
   );
 }
 ```
 
-> **What this teaches you: composition.** This is the core idea of React: build small, focused, independently-understandable components, then **compose** them together like LEGO bricks to build the full page. `page.tsx` reads almost like an outline of the page in plain English: Nav, then Hero, then About, etc., because that's literally what it is. Want to reorder sections, or remove one (we did this earlier in the project with a "Portfolio" section)? Delete or move one line here; no need to touch the component itself.
+> **What this teaches you: composition.** This is the core idea of React: build small, focused, independently-understandable components, then **compose** them together like LEGO bricks to build the full page. `page.tsx` reads almost like an outline of the page in plain English: Nav, then Hero, then About, etc., because that's literally what it is. `Projects.tsx` and `Skills.tsx` hide themselves entirely (return `null`) if their data is empty, so a fork with no projects listed in `content/profile.json` just doesn't show that section, no code change needed. Want to reorder or remove a section? Delete or move one line here; no need to touch the component itself.
 >
 > The `<> ... </>` wrapper is called a **React Fragment**. It groups multiple elements together without adding an extra, meaningless `<div>` to the actual HTML output. Notice `<Chat />` sits outside `<main>`, alongside `<Footer />`: it's a floating widget that should appear on top of everything, not flow inline with the page content.
+>
+> **Props, for real this time.** `page.tsx` runs on the server, so it's the one place that can freely import `profile` (which needs `fs` under the hood, see [4.1](#41-the-content-docsprofilejson-loaded-by-profilets)). `Nav` and `Chat` are `"use client"` components (they need interactivity), and client components can't import a module that uses `fs`, so instead `page.tsx` reads the data once and passes down just the pieces each one needs (`name`, `resumeHref`, `hasProjects`) as **props**, plain function arguments passed from parent to child component. This is the standard React fix whenever a client component needs server-only data.
 
 ---
 
@@ -350,18 +394,26 @@ Let's look at a full component to see React patterns in action. Here's the top-l
 "use client";
 
 import { useEffect, useState } from "react";
-import { profile } from "@/data/profile";
 
-const links = [
-  { href: "#about", label: "About" },
-  { href: "#journey", label: "Journey" },
-  { href: "#skills", label: "Skills" },
-  { href: "#contact", label: "Contact" },
-];
-
-export default function Nav() {
+export default function Nav({
+  name,
+  resumeHref,
+  hasProjects,
+}: {
+  name: string;
+  resumeHref: string;
+  hasProjects: boolean;
+}) {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
+
+  const links = [
+    { href: "#about", label: "About" },
+    { href: "#journey", label: "Journey" },
+    { href: "#skills", label: "Skills" },
+    ...(hasProjects ? [{ href: "#projects", label: "Projects" }] : []),
+    { href: "#contact", label: "Contact" },
+  ];
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -527,17 +579,17 @@ try {
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
-      "HTTP-Referer": "https://arpit-jaiswal-portfolio.local",
-      "X-Title": "Arpit Jaiswal - Digital Twin",
+      "HTTP-Referer": "https://your-portfolio.local",
+      "X-Title": "Digital Twin",
     },
     body: JSON.stringify({
-      model: MODEL, // "openai/gpt-oss-20b:free"
+      model: MODEL, // defaults to a free OpenRouter model, overridable via OPENROUTER_MODEL
       messages: [
         { role: "system", content: buildDigitalTwinSystemPrompt() },
         ...messages,
       ],
       temperature: 0.6,
-      max_tokens: 600,
+      max_tokens: 1000,
     }),
   });
   ...
@@ -588,7 +640,7 @@ if (!upstream.ok) {
 
 > **HTTP status codes.** `upstream.ok` is `true` only for successful responses (status 200-299). Status `429` specifically means **"Too Many Requests,"** OpenRouter's way of saying "this free model is oversubscribed right now, slow down." We specifically detect this code and dig into the error response's JSON body to extract *how long* to wait (`retry_after_seconds`), so we can tell the visitor something genuinely useful ("try again in 30s") instead of a vague "something went wrong." Any *other* failure gets a generic fallback message with a `502` status ("Bad Gateway," meaning "the service we depend on failed").
 >
-> This handling exists because it actually happened during development: `openai/gpt-oss-20b:free` is a shared free-tier model, and it was occasionally rate-limited (429) or slow (one real response took 37 seconds) under load. That's expected behavior for a free model, and this code exists specifically to degrade gracefully around it instead of just showing a generic error.
+> This handling exists because it actually happened during development: the default free-tier model is shared across everyone using it for free, and it was occasionally rate-limited (429) or slow (one real response took 37 seconds) under load. That's expected behavior for a free model, and this code exists specifically to degrade gracefully around it instead of just showing a generic error.
 
 **Step 5: on success, extract and return the AI's reply:**
 
@@ -738,7 +790,7 @@ Here's the full request/response journey when a visitor asks the chatbot a quest
 
 ```
 1. Visitor clicks "Ask my digital twin"          ->  Chat.tsx: setOpen(true)
-2. Visitor types "What did you build at Meesho?"
+2. Visitor types "What's your strongest skill set?"
    and hits Send                                  ->  Chat.tsx: send() is called
 
 3. Chat.tsx sends a POST request to /api/chat
@@ -749,14 +801,13 @@ Here's the full request/response journey when a visitor asks the chatbot a quest
 5. route.ts:
      - reads OPENROUTER_API_KEY from .env
      - validates the incoming messages
-     - builds a system prompt from profile.ts
-       (buildDigitalTwinSystemPrompt())
-     - calls OpenRouter's API with the model
-       "openai/gpt-oss-20b:free"
+     - builds a system prompt from content/profile.json
+       (buildDigitalTwinSystemPrompt(), via profile.ts)
+     - calls OpenRouter's API with the configured model
 
 6. OpenRouter forwards the request to the AI
    model, which generates a reply grounded in
-   the career facts from profile.ts
+   the career facts from content/profile.json
 
 7. route.ts receives the reply, extracts the
    text, and sends it back as JSON               ->  { "reply": "At Meesho I built..." }
@@ -792,13 +843,13 @@ npm run start     # Run that production build locally
 npx tsc --noEmit  # Type-check the whole project without building
 ```
 
-To update your content (bio, jobs, skills, links), the only file you should ever need to touch is:
+To update your content (bio, jobs, skills, projects, links), the only file you should ever need to touch is:
 
 ```
-src/data/profile.ts
+content/profile.json
 ```
 
-Every section of the site, and the AI chatbot's knowledge, reads from this one file.
+Every section of the site, and the AI chatbot's knowledge, reads from this one file (see [`content/profile.schema.md`](./content/profile.schema.md) for its exact shape). Because it's read from disk at server start rather than compiled into the code, a production build (`npm run build && npm run start`) picks up new content on the next rebuild; `npm run dev` picks it up on restart.
 
 ### Version control
 
@@ -841,4 +892,4 @@ A quick reference for terms used throughout this tutorial.
 
 ---
 
-That's the whole site. If you want a next step to practice: try editing one bullet point in `src/data/profile.ts`, save the file, and watch it update instantly in the browser (thanks to Next.js's hot-reload), both on the page itself, and in what the AI chatbot knows the next time you ask it a question.
+That's the whole site. If you want a next step to practice: try editing one bullet point in `content/profile.json`, restart `npm run dev`, and watch it update in the browser, both on the page itself, and in what the AI chatbot knows the next time you ask it a question.

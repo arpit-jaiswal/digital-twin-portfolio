@@ -1,8 +1,12 @@
+name: digital-twin-portfolio
+
 services:
   app:
-    build: .
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
     ports:
       - "3000:3000"
     env_file:
-      - .env
+      - ../.env
     restart: unless-stopped
