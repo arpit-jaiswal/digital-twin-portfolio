@@ -4,7 +4,7 @@ import { buildDigitalTwinSystemPrompt } from "@/data/profile";
 export const runtime = "nodejs";
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
-const DEFAULT_MODEL = "openai/gpt-oss-20b:free";
+const DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b:free";
 const MAX_HISTORY_MESSAGES = 16;
 const MAX_MESSAGE_LENGTH = 2000;
 const UPSTREAM_TIMEOUT_MS = 55_000;
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
           ...messages,
         ],
         temperature: 0.6,
-        max_tokens: 600,
+        max_tokens: 1000,
       }),
     });
 
