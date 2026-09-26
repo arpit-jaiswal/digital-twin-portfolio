@@ -7,13 +7,13 @@ type Message = {
   content: string;
 };
 
-const SUGGESTIONS = [
-  "What did you build at Hyperface?",
-  "Why the sabbatical?",
-  "What's your strongest skill set?",
-];
-
-export default function Chat({ name }: { name: string }) {
+export default function Chat({
+  name,
+  suggestions,
+}: {
+  name: string;
+  suggestions: string[];
+}) {
   const firstName = name.split(" ")[0];
   const INITIAL_MESSAGE: Message = {
     role: "assistant",
@@ -150,9 +150,9 @@ export default function Chat({ name }: { name: string }) {
             )}
           </div>
 
-          {messages.length <= 1 && (
+          {messages.length <= 1 && suggestions.length > 0 && (
             <div className="px-5 pb-3 flex flex-wrap gap-2">
-              {SUGGESTIONS.map((s) => (
+              {suggestions.map((s) => (
                 <button
                   key={s}
                   onClick={() => send(s)}

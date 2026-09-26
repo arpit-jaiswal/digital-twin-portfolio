@@ -20,6 +20,13 @@ be traceable back to your actual resume/LinkedIn/other source documents.
     "resumeHref": "leave as '/api/resume', which serves content/resume.pdf",
     "yearsExperience": "string, e.g. '8+'"
   },
+  "chatSuggestions": [
+    "string, ..."
+    // optional: suggestion chips shown in the chat widget before the
+    // visitor's first message. Omit the field, or leave as [], to hide
+    // the suggestions row. Keep these grounded in your actual journey/
+    // skills data, same rule as everything else here.
+  ],
   "stats": [
     { "value": "string, e.g. '8+'", "label": "string" }
     // any number of {value, label} tiles shown near the top of the page

@@ -32,6 +32,7 @@ type ProfileData = {
     resumeHref: string;
     yearsExperience: string;
   };
+  chatSuggestions: string[];
   stats: { value: string; label: string }[];
   about: { paragraphs: string[]; focus: string[] };
   journey: JourneyEntry[];
@@ -72,6 +73,7 @@ function loadProfileData(): ProfileData {
 const data = loadProfileData();
 
 export const profile = data.profile;
+export const chatSuggestions = data.chatSuggestions ?? [];
 export const stats = data.stats;
 export const about = data.about;
 export const journey = data.journey;

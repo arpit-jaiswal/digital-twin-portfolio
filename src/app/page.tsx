@@ -7,7 +7,7 @@ import Projects from "@/components/Projects";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
 import Chat from "@/components/Chat";
-import { profile, projects } from "@/data/profile";
+import { profile, projects, chatSuggestions } from "@/data/profile";
 
 export default function Home() {
   return (
@@ -26,7 +26,7 @@ export default function Home() {
         <Contact />
       </main>
       <Footer />
-      <Chat name={profile.name} />
+      <Chat name={profile.name} suggestions={chatSuggestions} />
     </>
   );
 }

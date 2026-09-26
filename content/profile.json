@@ -10,6 +10,11 @@
     "resumeHref": "/api/resume",
     "yearsExperience": "8+"
   },
+  "chatSuggestions": [
+    "What did you build at Hyperface?",
+    "Why the sabbatical?",
+    "What's your strongest skill set?"
+  ],
   "stats": [
     { "value": "8+", "label": "Years building production systems" },
     { "value": "5M+", "label": "Notifications in a single campaign" },
