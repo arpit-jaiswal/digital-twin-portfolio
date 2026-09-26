@@ -1,25 +1,25 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { profile } from "@/data/profile";
 
 type Message = {
   role: "user" | "assistant";
   content: string;
 };
 
-const SUGGESTIONS = [
-  "What did you build at Hyperface?",
-  "Why the sabbatical?",
-  "What's your strongest skill set?",
-];
+export default function Chat({
+  name,
+  suggestions,
+}: {
+  name: string;
+  suggestions: string[];
+}) {
+  const firstName = name.split(" ")[0];
+  const INITIAL_MESSAGE: Message = {
+    role: "assistant",
+    content: `Hey, I'm ${firstName}'s digital twin. Ask me anything about his career, the systems he's built, or his experience across fintech and e-commerce.`,
+  };
 
-const INITIAL_MESSAGE: Message = {
-  role: "assistant",
-  content: `Hey, I'm ${profile.name.split(" ")[0]}'s digital twin. Ask me anything about his career, the systems he's built, or his experience across fintech and e-commerce.`,
-};
-
-export default function Chat() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
@@ -91,7 +91,7 @@ export default function Chat() {
             <span className="h-2.5 w-2.5 rounded-full bg-accent shadow-[0_0_10px_var(--accent)]" />
             <div>
               <p className="font-display text-sm font-semibold leading-tight">
-                {profile.name} · Digital Twin
+                {name} · Digital Twin
               </p>
               <p className="font-mono text-[11px] text-muted-2 leading-tight">
                 AI, answers from his real career history
@@ -150,9 +150,9 @@ export default function Chat() {
             )}
           </div>
 
-          {messages.length <= 1 && (
+          {messages.length <= 1 && suggestions.length > 0 && (
             <div className="px-5 pb-3 flex flex-wrap gap-2">
-              {SUGGESTIONS.map((s) => (
+              {suggestions.map((s) => (
                 <button
                   key={s}
                   onClick={() => send(s)}

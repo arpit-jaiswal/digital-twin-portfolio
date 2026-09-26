@@ -2,9 +2,9 @@
 
 A personal portfolio site built with Next.js: an about/career-journey/skills page, plus an AI "digital twin" chat widget (powered by OpenRouter) that answers career questions grounded in your real work history.
 
-This is Arpit Jaiswal's live site, but the project is set up so anyone can fork it and make it their own. See [Make This Your Own](#make-this-your-own) below.
+This is a template project: all personal content lives in `content/`, so anyone can fork it and make it their own. See [Make This Your Own](#make-this-your-own) below.
 
-See [`tutorial.md`](./tutorial.md) for a full beginner-friendly walkthrough of how the site and the AI chat are built.
+See [`guides/tutorial.md`](./guides/tutorial.md) for a full beginner-friendly walkthrough of how the site and the AI chat are built.
 
 ## Getting Started
 
@@ -23,13 +23,13 @@ Copy `.env.example` to `.env` and fill it in. Never commit `.env`, it's already 
 | Variable | Required | Description |
 |---|---|---|
 | `OPENROUTER_API_KEY` | Yes | Your OpenRouter API key. Get one at [openrouter.ai/settings/keys](https://openrouter.ai/settings/keys). |
-| `OPENROUTER_MODEL` | No | Which chat model the digital twin uses (any model listed at [openrouter.ai/models](https://openrouter.ai/models)). Defaults to `openai/gpt-oss-20b:free` if not set. |
+| `OPENROUTER_MODEL` | No | Which chat model the digital twin uses (any model listed at [openrouter.ai/models](https://openrouter.ai/models)). Defaults to `nvidia/nemotron-3-super-120b-a12b:free` if not set. |
 
 ## Run with Docker
 
 ```bash
 cp .env.example .env   # then fill in your OPENROUTER_API_KEY
-docker compose up --build
+docker compose -f deployment/docker-compose.yml up --build
 ```
 
 Open [http://localhost:3000](http://localhost:3000). The compose file reads env vars from `.env` at runtime, they are never baked into the image.
@@ -37,62 +37,59 @@ Open [http://localhost:3000](http://localhost:3000). The compose file reads env 
 To build/run without compose:
 
 ```bash
-docker build -t digital-twin-portfolio .
+docker build -f deployment/Dockerfile -t digital-twin-portfolio .
 docker run --env-file .env -p 3000:3000 digital-twin-portfolio
 ```
 
 ## Content
 
-All site content (bio, career journey, skills, contact links) lives in `src/data/profile.ts`, edit that one file to update the whole site, including what the digital twin chatbot knows.
+**All dynamic/user-specific data lives in `content/`, not in the source code.** `src/data/profile.ts` is just a loader: it reads `content/profile.json` at runtime and never contains any personal data itself, so nothing under `src/` needs to change to make this your own site.
+
+- `content/profile.json` — the structured data behind the whole site and the digital twin chatbot (name, bio, career journey, skills, education, contact links). See [`content/profile.schema.md`](./content/profile.schema.md) for the exact shape.
+- `content/resume.pdf` — served as-is at `/api/resume` (the "Resume" buttons on the site link here).
+- `content/linkedin_profile.pdf`, `content/github.txt`, `content/portfolio.txt` — optional raw source documents, only used as input when generating `profile.json` (see below); not served directly.
 
 ## Make This Your Own
 
-To turn this into *your* portfolio instead of Arpit's:
+To turn this into *your* portfolio, everything happens inside `content/` — **no code changes required**, either path below ends with just restarting the app (`npm run dev` / `npm run build && npm run start`, or rebuilding the Docker image).
 
-1. **Replace the source documents in `docs/`.** Drop in your own career documents, for example:
-   - `docs/resume.pdf`
-   - `docs/linkedin_profile.pdf`
-   - `docs/github.txt` (a summary of notable repos/projects, if you want them referenced)
-   - `docs/portfolio.txt` (anything else: side projects, publications, talks, whatever you want the site and chatbot to know about)
+### Option A: Fill in `content/profile.json` by hand
 
-   Any file type an AI agent can read (PDF, `.txt`, `.md`) works. Add as many or as few as you have.
+No AI agent needed, just data entry:
 
-2. **Hand the prompt below to an AI coding agent** (Claude Code, or similar) with this repo open. It will read everything in `docs/`, rewrite `src/data/profile.ts` to match, swap in your resume PDF, and verify the site builds.
+1. Replace `content/resume.pdf` with your own resume.
+2. Edit `content/profile.json` directly, following [`content/profile.schema.md`](./content/profile.schema.md).
+3. Set your own `OPENROUTER_API_KEY` in `.env` (see above), and optionally `OPENROUTER_MODEL`.
+4. Restart the app.
 
-3. **Set your own `OPENROUTER_API_KEY`** in `.env` (see above), and optionally `OPENROUTER_MODEL` if you don't want the default free model.
+### Option B: Generate `content/profile.json` with an AI agent
 
-### Prompt to give your AI agent
+If you'd rather not fill in the JSON by hand, drop your raw career documents into `content/`:
 
-```
-Read every file in the docs/ folder (resume, LinkedIn export, and any other
-career documents I've added there). Use them to rewrite src/data/profile.ts
-so the whole site reflects my background instead of the current placeholder
-content.
+- `content/resume.pdf`
+- `content/linkedin_profile.pdf`
+- `content/github.txt` (a summary of notable repos/projects, if you want them referenced)
+- `content/portfolio.txt` (anything else: side projects, publications, talks, whatever you want the site and chatbot to know about)
 
-Keep the exact same structure and exported shape as the current
-src/data/profile.ts (profile, stats, about, JourneyEntry type, journey,
-skills, education, and the buildDigitalTwinSystemPrompt function), just
-replace the values. Don't invent facts, dates, employers, or metrics that
-aren't actually in my documents; if something is ambiguous, ask me instead
-of guessing.
+Any file type an AI agent can read (PDF, `.txt`, `.md`) works. Add as many or as few as you have, then run an AI coding agent non-interactively with this repo open, for example with [Claude Code](https://claude.com/claude-code):
 
-Style rules to follow:
-- No em dashes anywhere (in profile.ts or in the system prompt's own
-  instructions to the AI) — use commas, periods, or colons instead.
-- Keep prose plain and factual, avoid marketing-style flourishes.
-- Job date ranges should use a plain hyphen, e.g. "Apr 2024 - Dec 2025".
-
-Also:
-- Copy my resume PDF into public/ and update profile.resumeHref to point
-  to it (remove the old placeholder PDF from public/ if it's no longer
-  referenced anywhere).
-- Update the README's first paragraph to reference me instead of Arpit
-  Jaiswal, and leave the rest of the README (including this section)
-  intact for whoever forks the project after me.
-
-When you're done, run `npx tsc --noEmit` to confirm there are no type
-errors, then start the dev server and confirm the site renders correctly
-before telling me you're finished.
+```bash
+claude -p "Read every file in the content/ folder (resume.pdf, linkedin_profile.pdf, github.txt, portfolio.txt, and anything else added there). Use them to write content/profile.json matching the schema in content/profile.schema.md. Don't invent facts, dates, employers, or metrics that aren't in the source documents; ask instead of guessing if something is ambiguous."
 ```
 
-The agent doing this work is effectively repeating the same process used to build this site in the first place, reading source documents and populating `profile.ts`, so it should produce comparable results without needing any new code in this repo.
+The agent only ever needs to write `content/profile.json`, it doesn't need to (and shouldn't need to) touch anything under `src/`. When it's done, verify with `npx tsc --noEmit` and by starting the app, then set your own `OPENROUTER_API_KEY` in `.env`.
+
+## Deploying to your own server (optional)
+
+If you're just running this locally, you can ignore `deployment/Caddyfile`, `deployment/docker-compose.prod.yml`, and the `Deploy` GitHub Actions workflow entirely, they have no effect on `docker compose -f deployment/docker-compose.yml up --build`.
+
+These files exist for deploying to your own server with automatic HTTPS via [Caddy](https://caddyserver.com/). To use them, you'll need:
+
+- An Ubuntu server (e.g. an AWS EC2 instance) with ports `22`, `80`, and `443` open.
+- A domain pointing at that server's IP address.
+- Three secrets set on this repo's GitHub Actions settings (Settings → Secrets and variables → Actions):
+  - `HOST` — the server's IP address.
+  - `SSH_KEY` — the contents of the private SSH key used to connect to the server.
+  - `PROD_ENV` — the full contents of your production `.env` file: everything in `.env.example` plus a `DOMAIN=your.domain.com` line.
+
+Deployment is triggered manually: go to the Actions tab, select the "Deploy" workflow, and click "Run workflow". It copies the repo to the server and brings the app up with Caddy in front of it, handling HTTPS automatically for your domain.
