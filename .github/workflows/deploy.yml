@@ -28,6 +28,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           envs: PROD_ENV
           script: |
+            set -e
             command -v docker >/dev/null || curl -fsSL https://get.docker.com | sudo sh
             cd /home/ubuntu/app
             echo "$PROD_ENV" > .env
