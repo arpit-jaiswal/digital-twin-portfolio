@@ -15,7 +15,7 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_KEY }}
           source: "."
-          target: "~/app"
+          target: "/home/ubuntu/app"
           rm: true
 
       - name: Build and start on server
@@ -29,7 +29,7 @@ jobs:
           envs: PROD_ENV
           script: |
             command -v docker >/dev/null || curl -fsSL https://get.docker.com | sudo sh
-            cd ~/app
+            cd /home/ubuntu/app
             echo "$PROD_ENV" > .env
             sudo docker compose --env-file .env \
               -f deployment/docker-compose.yml \

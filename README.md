@@ -23,7 +23,7 @@ Copy `.env.example` to `.env` and fill it in. Never commit `.env`, it's already 
 | Variable | Required | Description |
 |---|---|---|
 | `OPENROUTER_API_KEY` | Yes | Your OpenRouter API key. Get one at [openrouter.ai/settings/keys](https://openrouter.ai/settings/keys). |
-| `OPENROUTER_MODEL` | No | Which chat model the digital twin uses (any model listed at [openrouter.ai/models](https://openrouter.ai/models)). Defaults to `openai/gpt-oss-20b:free` if not set. |
+| `OPENROUTER_MODEL` | No | Which chat model the digital twin uses (any model listed at [openrouter.ai/models](https://openrouter.ai/models)). Defaults to `nvidia/nemotron-3-super-120b-a12b:free` if not set. |
 
 ## Run with Docker
 
