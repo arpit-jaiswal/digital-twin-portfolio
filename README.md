@@ -78,3 +78,18 @@ claude -p "Read every file in the content/ folder (resume.pdf, linkedin_profile.
 ```
 
 The agent only ever needs to write `content/profile.json`, it doesn't need to (and shouldn't need to) touch anything under `src/`. When it's done, verify with `npx tsc --noEmit` and by starting the app, then set your own `OPENROUTER_API_KEY` in `.env`.
+
+## Deploying to your own server (optional)
+
+If you're just running this locally, you can ignore `deployment/Caddyfile`, `deployment/docker-compose.prod.yml`, and the `Deploy` GitHub Actions workflow entirely, they have no effect on `docker compose -f deployment/docker-compose.yml up --build`.
+
+These files exist for deploying to your own server with automatic HTTPS via [Caddy](https://caddyserver.com/). To use them, you'll need:
+
+- An Ubuntu server (e.g. an AWS EC2 instance) with ports `22`, `80`, and `443` open.
+- A domain pointing at that server's IP address.
+- Three secrets set on this repo's GitHub Actions settings (Settings → Secrets and variables → Actions):
+  - `HOST` — the server's IP address.
+  - `SSH_KEY` — the contents of the private SSH key used to connect to the server.
+  - `PROD_ENV` — the full contents of your production `.env` file: everything in `.env.example` plus a `DOMAIN=your.domain.com` line.
+
+Deployment is triggered manually: go to the Actions tab, select the "Deploy" workflow, and click "Run workflow". It copies the repo to the server and brings the app up with Caddy in front of it, handling HTTPS automatically for your domain.
